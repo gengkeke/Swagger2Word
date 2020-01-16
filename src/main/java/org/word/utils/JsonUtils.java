@@ -13,11 +13,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.IOException;
 import java.util.List;
 
-/**
- * @author cuixiuyin
- * @Date: 2018/11/05
- */
-
 public class JsonUtils {
 
     private static ObjectMapper objectMapper = new ObjectMapper();

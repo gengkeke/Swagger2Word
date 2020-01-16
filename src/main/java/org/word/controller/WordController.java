@@ -17,9 +17,6 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.util.Map;
 
-/**
- * Created by XiuYin.Cui on 2018/1/11.
- */
 @Controller
 public class WordController {
 
@@ -43,7 +40,7 @@ public class WordController {
      * @return
      */
     @Deprecated
-    @RequestMapping("/toWord")
+    @RequestMapping("/")
     public String getWord(Model model, @RequestParam(value = "url", required = false) String url,
                           @RequestParam(value = "download", required = false, defaultValue = "1") Integer download) {
         url = StringUtils.defaultIfBlank(url, swaggerUrl);
@@ -62,7 +59,7 @@ public class WordController {
      */
     @RequestMapping("/downloadWord")
     public void word(@RequestParam(required = false) String url, HttpServletResponse response) {
-        ResponseEntity<String> forEntity = restTemplate.getForEntity("http://localhost:" + port + "/toWord?download=0&url=" + StringUtils.defaultIfBlank(url, swaggerUrl), String.class);
+        ResponseEntity<String> forEntity = restTemplate.getForEntity("http://localhost:" + port + "?download=0&url=" + StringUtils.defaultIfBlank(url, swaggerUrl), String.class);
         response.setContentType("application/octet-stream;charset=utf-8");
         response.setCharacterEncoding("utf-8");
         try (BufferedOutputStream bos = new BufferedOutputStream(response.getOutputStream())) {

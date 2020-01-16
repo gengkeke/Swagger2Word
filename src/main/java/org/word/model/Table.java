@@ -4,9 +4,6 @@ import lombok.Data;
 
 import java.util.List;
 
-/**
- * Created by XiuYin.Cui on 2018/1/11.
- */
 @Data
 public class Table {
 
