@@ -4,6 +4,11 @@
     <meta http-equiv="Content-Type" content="application/msword"/>
     <title>toWord</title>
     <style type="text/css">
+        pre{
+            margin: 0;
+            padding: 0;
+            font-family: "Microsoft YaHei UI";
+        }
         .bg {
             color: #fff;
             background-color: #559e68;
@@ -67,14 +72,14 @@
         <a class="download_btn" th:if="${download == 1}" th:href="${'/downloadWord?url='+ url}">下载文档</a>
         <br>
     </div>
-    <div th:each="tableMap:${tableMap}" style="margin-bottom:20px;">
+    <div th:each="tableMap,tableMapStat:${tableMap}" style="margin-bottom:20px;">
         <!--这个是类的说明-->
-        <h4 class="first_title" th:text="${tableMap.key}"></h4>
+        <h4 class="first_title" th:text="${tableMapStat.count} +' '+ ${tableMap.key}"></h4>
         <div th:each="table,tableStat:${tableMap.value}">
 
             <!--这个是每个请求的说明，方便生成文档后进行整理-->
             <br th:if="${tableStat.index != 0}">
-            <h5 class="second_title" th:text="${tableStat.count} + '）' + ${table.tag}"></h5>
+            <h5 class="second_title" th:text="${tableMapStat.count} +'.'+${tableStat.count} +' '+ ${table.tag}"></h5>
 
             <table border="1" cellspacing="0" cellpadding="0" width="100%">
                 <tr class="bg">
@@ -147,11 +152,11 @@
                 </tr>
                 <tr class="specialHeight">
                     <td class="bg">请求参数</td>
-                    <td colspan="4" th:text="${table.requestParam}"></td>
+                    <td colspan="4" style="padding: 10px 0 10px 10px;"><pre th:text="${table.requestParam}"></pre></td>
                 </tr>
                 <tr class="specialHeight">
                     <td class="bg">返回值</td>
-                    <td colspan="4" th:text="${table.responseParam}"></td>
+                    <td colspan="4" style="padding: 10px 0 10px 10px;"><pre th:text="${table.responseParam}"></pre></td>
                 </tr>
 
             </table>

@@ -1,6 +1,9 @@
 package org.word.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,10 +21,6 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
-/**
- * @Author XiuYin.Cui
- * @Date 2018/1/12
- **/
 @SuppressWarnings({"unchecked", "rawtypes"})
 @Slf4j
 @Service
@@ -29,6 +28,9 @@ public class WordService {
 
     @Autowired
     private RestTemplate restTemplate;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     public Map<String, Object> tableList(String swaggerUrl) {
         Map<String, Object> resultMap = new HashMap<>();
@@ -98,7 +100,9 @@ public class WordService {
                     table.setRequestForm(requestForm);
                     table.setResponseForm(responseForm);
                     table.setRequestType(requestType);
+                    //TODO 请求参数
                     table.setRequestList(processRequestList(parameters));
+                    //TODO 响应参数
                     table.setResponseList(processResponseCodeList(responses));
 
                     // 取出来状态是200时的返回值
@@ -107,9 +111,10 @@ public class WordService {
                         table.setModelAttr(processResponseModelAttrs(obj, definitinMap));
                     }
 
-                    //示例
-                    table.setRequestParam(processRequestParam(table.getRequestList(), definitinMap));
-                    table.setResponseParam(processResponseParam(obj, definitinMap));
+                    //TODO 请求示例
+                    table.setRequestParam(processRequestParam(table.getRequestList(), map));
+                    //TODO 响应示例
+                    table.setResponseParam(processResponseParam(obj, map));
 
                     result.add(table);
                 }
@@ -278,7 +283,7 @@ public class WordService {
      * @param responseObj
      * @return
      */
-    private String processResponseParam(Map<String, Object> responseObj, Map<String, ModelAttr> definitinMap) throws JsonProcessingException {
+    private String processResponseParam(Map<String, Object> responseObj, Map<String, Object> map) throws IOException {
         if (responseObj != null && responseObj.get("schema") != null) {
             Map<String, Object> schema = (Map<String, Object>) responseObj.get("schema");
             String type = (String) schema.get("type");
@@ -295,14 +300,20 @@ public class WordService {
                 ref = (String) schema.get("$ref");
             }
             if (StringUtils.isNotEmpty(ref)) {
-                ModelAttr modelAttr = definitinMap.get(ref);
+                //解析swagger2 ref链接
+                ObjectNode objectNode = parseRef(ref, map);
+                ArrayNode arrayNode = JsonUtils.createArrayNode();
+                arrayNode.add(objectNode);
+                Object value = objectMapper.readValue(arrayNode.toString(), Object.class);
+                return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(value);
+/*               ModelAttr modelAttr = definitinMap.get(ref);
                 if (modelAttr != null && !CollectionUtils.isEmpty(modelAttr.getProperties())) {
                     Map<String, Object> responseMap = new HashMap<>(8);
                     for (ModelAttr subModelAttr : modelAttr.getProperties()) {
                         responseMap.put(subModelAttr.getName(), subModelAttr.getType());
                     }
                     return JsonUtils.writeJsonStr(responseMap);
-                }
+                }*/
             }
         }
         return StringUtils.EMPTY;
@@ -312,10 +323,10 @@ public class WordService {
      * 封装请求体
      *
      * @param list
-     * @param definitinMap
+     * @param map
      * @return
      */
-    private String processRequestParam(List<Request> list, Map<String, ModelAttr> definitinMap) throws IOException {
+    private String processRequestParam(List<Request> list, Map<String, Object> map) throws IOException {
         Map<String, Object> paramMap = new HashMap<>(8);
         if (list != null && list.size() > 0) {
             for (Request request : list) {
@@ -336,19 +347,86 @@ public class WordService {
                         break;
                     case "body":
                     case "object":
-                        ModelAttr modelAttr = definitinMap.get("#/definitions/" + request.getParamType());
-                        if (modelAttr != null && !CollectionUtils.isEmpty(modelAttr.getProperties())) {
-                            for (ModelAttr subModelAttr : modelAttr.getProperties()) {
-                                paramMap.put(subModelAttr.getName(), subModelAttr.getType());
-                            }
-                            break;
-                        }
+                        ObjectNode objectNode = parseRef(request.getParamType(), map);
+                        paramMap = JsonUtils.readValue(objectNode.toString(), Map.class);
+                        break;
                     default:
                         paramMap.put(name, null);
                         break;
                 }
             }
         }
-        return JsonUtils.writeJsonStr(paramMap);
+        Object value = objectMapper.readValue(JsonUtils.writeJsonStr(paramMap), Object.class);
+        return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(value);
+    }
+
+
+    /**
+     * 从map中解析出指定的ref
+     *
+     * @param ref ref链接 例如："#/definitions/PageInfoBT«Customer»"
+     * @param map 是整个swagger json转成map对象
+     * @return
+     * @author fpzhan
+     */
+    private ObjectNode parseRef(String ref, Map<String, Object> map) {
+        ObjectNode objectNode = JsonUtils.createObjectNode();
+        if (StringUtils.isNotEmpty(ref) && ref.startsWith("#")) {
+            String[] refs = ref.split("/");
+            Map<String, Object> tmpMap = map;
+            //取出ref最后一个参数 start
+            for (String tmp : refs) {
+                if (!"#".equals(tmp)) {
+                    tmpMap = (Map<String, Object>) tmpMap.get(tmp);
+                }
+            }
+            //取出ref最后一个参数 end
+            //取出参数
+            if (tmpMap == null) {
+                return objectNode;
+            }
+            Object properties = tmpMap.get("properties");
+            if (properties == null) {
+                return objectNode;
+            }
+            Map<String, Object> propertiesMap = (Map<String, Object>) properties;
+            Set<String> keys = propertiesMap.keySet();
+            //遍历key
+            for (String key : keys) {
+                Map<String, Object> keyMap = (Map) propertiesMap.get(key);
+                if ("array".equals(keyMap.get("type"))) {
+                    //数组的处理方式
+                    String sonRef = (String) ((Map) keyMap.get("items")).get("$ref");
+                    //对象自包含，跳过解析
+                    if (ref.equals(sonRef)) {
+                        continue;
+                    }
+                    JsonNode jsonNode = parseRef(sonRef, map);
+                    ArrayNode arrayNode = JsonUtils.createArrayNode();
+                    arrayNode.add(jsonNode);
+                    objectNode.set(key, arrayNode);
+                } else if (keyMap.get("$ref") != null) {
+                    //对象的处理方式
+                    String sonRef = (String) keyMap.get("$ref");
+                    //对象自包含，跳过解析
+                    if (ref.equals(sonRef)) {
+                        continue;
+                    }
+                    ObjectNode object = parseRef(sonRef, map);
+                    objectNode.set(key, object);
+                } else {
+                    //其他参数的处理方式，string、int
+                    String str = "";
+                    if (keyMap.get("description") != null) {
+                        str = str + keyMap.get("description");
+                    }
+                    if (keyMap.get("format") != null) {
+                        str = str + String.format("格式为(%s)", keyMap.get("format"));
+                    }
+                    objectNode.put(key, str);
+                }
+            }
+        }
+        return objectNode;
     }
 }
