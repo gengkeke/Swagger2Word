@@ -1,6 +1,6 @@
 package org.word.controller;
 
-import org.apache.commons.lang3.StringUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -9,49 +9,39 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.RestTemplate;
-import org.word.service.WordService;
+import org.word.model.result.Result;
+import org.word.service.TransformService;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.net.URLEncoder;
-import java.util.Map;
 
 /**
- * Created by XiuYin.Cui on 2018/1/11.
+ * @author gengkeke
+ * @date 2020/1/17 10:02
+ * @Description
  */
+@Slf4j
 @Controller
-public class WordController {
-
+public class IndexController {
     @Autowired
-    private WordService tableService;
+    private TransformService transformService;
 
     @Autowired
     private RestTemplate restTemplate;
 
-    @Value("${swagger.url}")
-    private String swaggerUrl;
-
     @Value("${server.port}")
     private Integer port;
 
-    /**
-     * 将 swagger 文档转换成 html 文档，可通过在网页上右键另存为 xxx.doc 的方式转换为 word 文档
-     *
-     * @param model
-     * @param url   需要转换成 word 文档的资源地址
-     * @return
-     */
-    @Deprecated
     @RequestMapping("/")
-    public String getWord(Model model, @RequestParam(value = "url", required = false) String url,
-                          @RequestParam(value = "download", required = false, defaultValue = "1") Integer download) {
-        url = StringUtils.defaultIfBlank(url, swaggerUrl);
-        Map<String, Object> result = tableService.tableList(url);
+    public String getWord(Model model, @RequestParam(value = "url") String url,
+                          @RequestParam(value = "download", required = false, defaultValue = "1") Integer download) throws IOException {
+        Result transform = transformService.transform(url);
         model.addAttribute("url", url);
         model.addAttribute("download", download);
-        model.addAllAttributes(result);
-        return "word";
+        model.addAttribute("result", transform);
+        return "index";
     }
 
     /**
@@ -62,7 +52,7 @@ public class WordController {
      */
     @RequestMapping("/downloadWord")
     public void word(@RequestParam(required = false) String url, HttpServletResponse response) {
-        ResponseEntity<String> forEntity = restTemplate.getForEntity("http://localhost:" + port + "?download=0&url=" + StringUtils.defaultIfBlank(url, swaggerUrl), String.class);
+        ResponseEntity<String> forEntity = restTemplate.getForEntity("http://localhost:" + port + "?download=0&url=" + url, String.class);
         response.setContentType("application/octet-stream;charset=utf-8");
         response.setCharacterEncoding("utf-8");
         try (BufferedOutputStream bos = new BufferedOutputStream(response.getOutputStream())) {
@@ -71,7 +61,7 @@ public class WordController {
             bos.write(bytes, 0, bytes.length);
             bos.flush();
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error(e.getMessage(), e);
         }
     }
 
