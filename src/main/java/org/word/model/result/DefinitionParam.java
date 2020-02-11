@@ -15,7 +15,7 @@ public class DefinitionParam implements Serializable {
     private String name;
     private String type;
     private String format;
-    private String example;
+    private Object example;
     private String description;
     private Boolean required = false;
 }

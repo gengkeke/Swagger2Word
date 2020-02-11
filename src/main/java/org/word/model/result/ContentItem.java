@@ -24,7 +24,9 @@ public class ContentItem implements Serializable {
     //响应参数
     private List<DefinitionParam> responseParams;
     //请求示例
-    private String requestExample = "{\t\n}";
+    private String requestExample;
+    //请求示例1
+    private String requestExample1;
     //响应示例
     private String responseExample = "{\t\n}";
 

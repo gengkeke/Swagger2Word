@@ -18,7 +18,7 @@ public class Property implements Serializable {
     private String type;
     // int32
     private String format;
-    private String example;
+    private Object example;
     // value
     private String description;
     //type 为 array 有 "$ref": "#/definitions/CatalogTreeDO"

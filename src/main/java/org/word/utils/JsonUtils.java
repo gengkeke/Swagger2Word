@@ -47,7 +47,7 @@ public class JsonUtils {
     }
 
     public static String writeJsonStr(Object obj) throws JsonProcessingException {
-        return objectMapper.writeValueAsString(obj);
+        return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(obj);
     }
 
     public static ObjectNode createObjectNode() {
