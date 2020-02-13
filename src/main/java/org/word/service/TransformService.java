@@ -104,12 +104,19 @@ public class TransformService {
                     if (!requestMap.isEmpty()) {
                         StringBuilder sb = new StringBuilder();
                         requestMap.forEach((k, v) -> {
+                            if (v == null || "".equals(v)) {
+                                v = "\"\"";
+                            }
                             sb.append(k);
                             sb.append("=");
-                            sb.append(v != null ? v : "\"\"");
-                            sb.append(";");
+                            sb.append(v);
+                            sb.append("&");
                         });
-                        contentItem.setRequestExample1(sb.toString());
+                        String s = sb.toString();
+                        if (s.endsWith("&")) {
+                            s = s.substring(0, s.length() - 1);
+                        }
+                        contentItem.setRequestExample1(s);
                     }
                 }
                 Map<String, ResponseInfo> responses = pathInfo.getResponses();
@@ -241,5 +248,4 @@ public class TransformService {
         }
         return value;
     }
-
 }

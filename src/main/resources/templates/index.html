@@ -3,12 +3,24 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta http-equiv="Content-Type" content="application/msword"/>
-    <title>toWord</title>
     <style type="text/css">
-        pre {
+        * {
             margin: 0;
             padding: 0;
-            font-family: "Microsoft YaHei UI";
+        }
+
+        .btBorder {
+            border-top: 1px solid #dbe3e4;
+        }
+
+        .blBorder {
+            border-left: 1px solid #dbe3e4;
+        }
+
+        pre {
+            font-size: 14px;
+            margin: 0;
+            padding: 0;
         }
 
         .bg {
@@ -16,35 +28,36 @@
             background-color: #5B9BD5;
         }
 
-        table {
-            border: 1px solid #dbe3e4;
-            table-layout: fixed;
+        table, table td, table th {
+            border-collapse: collapse;
         }
 
-        tr {
+        table {
+            font-size: 14px;
+            border-spacing: 0;
+            /*table-layout: fixed;*/
+        }
+
+        table tr {
             height: 32px;
             font-size: 12px;
         }
 
-        td {
-            padding: 0px 5px 0px 5px;
-            border: 1px solid #dbe3e4;
+        table td {
+            padding: 0px 5px;
+            border-right: 1px solid #dbe3e4;
+            border-bottom: 1px solid #dbe3e4;
             height: 32px;
             overflow: hidden;
             word-break: break-all;
             word-wrap: break-word;
             font-size: 14px;
             text-align: left;
-            padding-left: 10px;
         }
 
         .param td {
-            text-align: center !important;
+            text-align: center;
             padding-left: 5px;
-        }
-
-        .specialHeight {
-            height: 40px;
         }
 
         .first_title {
@@ -72,6 +85,7 @@
             float: right;
         }
     </style>
+    <title>toWord</title>
 </head>
 
 <body>
@@ -87,76 +101,78 @@
             <h3 class="second_title"
                 th:text="1+'.'+${contentStat.count} +'.'+${contentItemStat.count} +' '+ ${contentItem.title}">
             </h3>
-            <table border="1" cellspacing="0" cellpadding="0" width="100%">
+            <table cellspacing="0" cellpadding="0" width="100%">
                 <tr class="bg">
-                    <td colspan="5" th:text="${contentItem.detail.title}"></td>
+                    <td colspan="2" class="btBorder">概述</td>
                 </tr>
                 <tr>
-                    <td width="25%">接口描述</td>
-                    <td colspan="4" th:text="${contentItem.detail.title}"></td>
+                    <td width="20%" class="blBorder">接口描述</td>
+                    <td width="80%" th:text="${contentItem.detail.title}"></td>
                 </tr>
                 <tr>
-                    <td>URL</td>
-                    <td colspan="4" th:text="${contentItem.detail.url}"></td>
+                    <td width="20%" class="blBorder">URL</td>
+                    <td th:text="${contentItem.detail.url}"></td>
                 </tr>
                 <tr>
-                    <td>请求方式</td>
-                    <td colspan="4" th:text="${contentItem.detail.requestMethod}"></td>
+                    <td width="20%" class="blBorder">请求方式</td>
+                    <td th:text="${contentItem.detail.requestMethod}"></td>
                 </tr>
                 <tr>
-                    <td>请求类型</td>
-                    <td colspan="4" th:text="${contentItem.detail.consume}"></td>
+                    <td width="20%" class="blBorder">请求类型</td>
+                    <td th:text="${contentItem.detail.consume}"></td>
                 </tr>
                 <tr>
-                    <td>返回类型</td>
-                    <td colspan="4" th:text="${contentItem.detail.produce}"></td>
+                    <td width="20%" class="blBorder">返回类型</td>
+                    <td th:text="${contentItem.detail.produce}"></td>
                 </tr>
-                <tr class="bg param" align="center">
-                    <td>参数名</td>
-                    <td>参数类型</td>
-                    <td>数据类型</td>
-                    <td>是否必填</td>
-                    <td>说明</td>
-                </tr>
+            </table>
 
+            <table cellspacing="0" cellpadding="0" width="100%">
+                <tr class="bg param" align="center">
+                    <td width="20%" class="blBorder">参数名</td>
+                    <td width="15%">参数类型</td>
+                    <td width="15%">数据类型</td>
+                    <td width="15%">是否必填</td>
+                    <td width="35%">说明</td>
+                </tr>
                 <tr align="center" th:each="requestParams:${contentItem.requestParams}">
-                    <td th:text="${requestParams.name}"></td>
+                    <td th:text="${requestParams.name}" class="blBorder"></td>
                     <td th:text="${requestParams.type}"></td>
                     <td th:text="${requestParams.format}"></td>
                     <td style="text-align: center;" th:if="${requestParams.required}" th:text="Y"></td>
                     <td style="text-align: center;" th:if="${!requestParams.required}" th:text="N"></td>
                     <td th:text="${requestParams.description}"></td>
                 </tr>
-
+            </table>
+            <table cellspacing="0" cellpadding="0" width="100%">
                 <tr class="bg param" align="center">
-                    <td>返回属性名</td>
-                    <td colspan="2">类型</td>
-                    <td colspan="2">说明</td>
+                    <td class="blBorder" width="20%">返回属性名</td>
+                    <td width="30%">类型</td>
+                    <td>说明</td>
                 </tr>
-
                 <tr align="center" th:each="responseParam:${contentItem.responseParams}">
-                    <td th:text="${responseParam.name}"></td>
-                    <td colspan="2" th:text="${responseParam.type}"></td>
-                    <td colspan="2" th:text="${responseParam.description}"></td>
+                    <td class="blBorder" th:text="${responseParam.name}"></td>
+                    <td th:text="${responseParam.type}"></td>
+                    <td th:text="${responseParam.description}"></td>
                 </tr>
-
+            </table>
+            <table cellspacing="0" cellpadding="0" width="100%">
                 <tr class="bg">
-                    <td colspan="5">示例</td>
+                    <td colspan="2" class="blBorder">示例</td>
                 </tr>
-                <tr class="specialHeight">
-                    <td class="bg">请求参数</td>
-                    <td colspan="4" style="padding: 10px 0 10px 10px;">
+                <tr>
+                    <td class="bg blBorder" width="20%">请求参数</td>
+                    <td style="padding: 10px 0 10px 10px;">
                         <pre th:text="${contentItem.requestExample}"></pre>
                         <pre th:text="${contentItem.requestExample1}"></pre>
                     </td>
                 </tr>
-                <tr class="specialHeight">
-                    <td class="bg">返回值</td>
-                    <td colspan="4" style="padding: 10px 0 10px 10px;">
+                <tr>
+                    <td class="bg blBorder">返回值</td>
+                    <td style="padding: 10px 0 10px 10px;">
                         <pre th:text="${contentItem.responseExample}"></pre>
                     </td>
                 </tr>
-
             </table>
         </div>
     </div>
